@@ -20,7 +20,6 @@ public class Orchestrator : MonoBehaviour
     void Start()
     {
         InitiateCells();
-        UpdateCellLinks();
     }
 
     private void Awake()
@@ -131,7 +130,7 @@ public class Orchestrator : MonoBehaviour
                 cellList.Add(InstantiateCell());
             }
         }
-        listLength = cellList.Count;
+        UpdateCellList();
     }
 
     void RepositionRescaleCells()
@@ -176,10 +175,7 @@ public class Orchestrator : MonoBehaviour
             cellList.Add(InstantiateCell());
         }
         sizeY += 1;
-        listLength = cellList.Count;
-        UpdateCellLinks();
-        UpdateCellSize();
-        RepositionRescaleCells();
+        UpdateCellList();
     }
 
     void RemoveRow()
@@ -191,10 +187,7 @@ public class Orchestrator : MonoBehaviour
             cellList.RemoveAt(lastItemIndex);
         }
         sizeY -= 1;
-        listLength = cellList.Count;
-        UpdateCellLinks();
-        UpdateCellSize();
-        RepositionRescaleCells();
+        UpdateCellList();
     }
 
     void AddColumn()
@@ -204,10 +197,7 @@ public class Orchestrator : MonoBehaviour
             cellList.Insert(index,InstantiateCell());
         }
         sizeX += 1;
-        listLength = cellList.Count;
-        UpdateCellLinks();
-        UpdateCellSize();
-        RepositionRescaleCells();
+        UpdateCellList();
     }
 
     void RemoveColumn()
@@ -218,6 +208,11 @@ public class Orchestrator : MonoBehaviour
             cellList.RemoveAt(index);
         }
         sizeX -= 1;
+        UpdateCellList();
+    }
+
+    private void UpdateCellList()
+    {
         listLength = cellList.Count;
         UpdateCellLinks();
         UpdateCellSize();
