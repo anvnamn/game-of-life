@@ -5,18 +5,21 @@ using UnityEngine;
 public class Orchestrator : MonoBehaviour
 {
     [SerializeField] GameObject cellPrefab;
-    [SerializeField] int sizeX = 49;
+    [SerializeField] int sizeX = 40;
     [SerializeField] int sizeY = 30;
 
+    // State vars
     int listLength;
     bool gameIsRunning = false;
+    float cellSizeX;
+    float cellSizeY;
+    float smallestCellSize;
 
     List<GameObject> cellList;
 
     void Start()
     {
         InitiateCells();
-        CreateCellLinks();
     }
 
     private void Awake()
@@ -48,6 +51,23 @@ public class Orchestrator : MonoBehaviour
             KillAllCells();
             gameIsRunning = false;
         }
+
+        if (Input.GetKeyDown(KeyCode.DownArrow) && sizeY < 100)
+        {
+            AddRow();
+        }
+        if (Input.GetKeyDown(KeyCode.UpArrow) && sizeY > 5)
+        {
+            RemoveRow();
+        }
+        if (Input.GetKeyDown(KeyCode.RightArrow) && sizeX < 100)
+        {
+            AddColumn();
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && sizeX > 5)
+        {
+            RemoveColumn();
+        }
     }
 
     private void KillAllCells()
@@ -75,6 +95,21 @@ public class Orchestrator : MonoBehaviour
         }
     }
 
+    void UpdateCellSize()
+    {
+        cellSizeX = Camera.main.orthographicSize * 2 * 4 / (3 *sizeX);
+        cellSizeY = Camera.main.orthographicSize * 2 / sizeY;
+
+        if (cellSizeX < cellSizeY)
+        {
+            smallestCellSize = cellSizeX;
+        }
+        else
+        {
+            smallestCellSize = cellSizeY;
+        }
+    }
+
     void RandomizeCells()
     {
         foreach (GameObject cellObject in cellList)
@@ -92,18 +127,99 @@ public class Orchestrator : MonoBehaviour
         {
             for (int column = 0; column < sizeX; column++)
             {
-                GameObject cellInstance = Instantiate(cellPrefab,
-                    new Vector3(column - sizeX / 2 + 0.5f,
-                    -row + sizeY / 2 - 0.5f, 0f),
-                    Quaternion.identity);
-                cellInstance.name = "Cell " + column + "-" + row; 
-                cellList.Add(cellInstance);
-                listLength = cellList.Count;
+                cellList.Add(InstantiateCell());
+            }
+        }
+        UpdateCellList();
+    }
+
+    void RepositionRescaleCells()
+    {
+        int listIndex = 0;
+
+        // Determine start of rows based on cell size
+        float totalRowLength = sizeX * smallestCellSize;
+        float rowOffset = (40 - totalRowLength) / 2;
+
+        // Determine start of colums based on cell size
+        float totalColumnHeight = sizeY * smallestCellSize;
+        float columnOffset = (30 - totalColumnHeight) / 2;
+
+        for (int row = 0; row < sizeY; row++)
+        {
+            for (int column = 0; column < sizeX; column++)
+            {
+                GameObject cell = cellList[listIndex].gameObject;
+                cell.transform.position =
+                    new Vector3(
+                        column * smallestCellSize + smallestCellSize / 2 + rowOffset,
+                        -row * smallestCellSize - smallestCellSize / 2 - columnOffset,
+                        0f);
+                cell.name = "Cell " + column + "-" + row;
+                cell.transform.localScale = new Vector3(smallestCellSize, smallestCellSize, 1);
+                listIndex++;
             }
         }
     }
 
-    void CreateCellLinks()
+    GameObject InstantiateCell()
+    {
+        GameObject cellInstance = Instantiate(cellPrefab);
+        return cellInstance;
+    }
+
+    void AddRow()
+    {
+        for (int column = 0; column < sizeX; column++)
+        {
+            cellList.Add(InstantiateCell());
+        }
+        sizeY += 1;
+        UpdateCellList();
+    }
+
+    void RemoveRow()
+    {
+        for (int column = 0; column < sizeX; column++)
+        {
+            int lastItemIndex = cellList.Count - 1;
+            Destroy(cellList[lastItemIndex]);
+            cellList.RemoveAt(lastItemIndex);
+        }
+        sizeY -= 1;
+        UpdateCellList();
+    }
+
+    void AddColumn()
+    {
+        for (int index = sizeX ; index < (sizeX + 1) * sizeY; index += sizeX + 1)
+        {
+            cellList.Insert(index,InstantiateCell());
+        }
+        sizeX += 1;
+        UpdateCellList();
+    }
+
+    void RemoveColumn()
+    {
+        for (int index = listLength - 1; index > 0; index -= sizeX)
+        {
+            Destroy(cellList[index]);
+            cellList.RemoveAt(index);
+        }
+        sizeX -= 1;
+        UpdateCellList();
+    }
+
+    private void UpdateCellList()
+    {
+        listLength = cellList.Count;
+        UpdateCellLinks();
+        UpdateCellSize();
+        RepositionRescaleCells();
+    }
+
+    void UpdateCellLinks()
     {
         bool topRow, bottomRow, leftColumn, rightColumn;
         int index = 0;
