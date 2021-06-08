@@ -61,6 +61,14 @@ public class Orchestrator : MonoBehaviour
         {
             RemoveRow();
         }
+        if (Input.GetKeyDown(KeyCode.RightArrow) && sizeX < 100)
+        {
+            AddColumn();
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && sizeX > 5)
+        {
+            RemoveColumn();
+        }
     }
 
     private void KillAllCells()
@@ -137,14 +145,20 @@ public class Orchestrator : MonoBehaviour
     {
         int listIndex = 0;
 
+        // Determine start of row based on cell size
+        float totalRowLength = sizeX * smallestCellSize;
+        float rowOffset = (40 - totalRowLength) / 2;
+
         for (int row = 0; row < sizeY; row++)
         {
             for (int column = 0; column < sizeX; column++)
             {
                 GameObject cell = cellList[listIndex].gameObject;
                 cell.transform.position =
-                    new Vector3(column * smallestCellSize + smallestCellSize / 2,
-                    -row * smallestCellSize - smallestCellSize / 2, 0f);
+                    new Vector3(
+                        column * smallestCellSize + smallestCellSize / 2 + rowOffset,
+                        -row * smallestCellSize - smallestCellSize / 2,
+                        0f);
                 cell.name = "Cell " + column + "-" + row;
                 cell.transform.localScale = new Vector3(smallestCellSize, smallestCellSize, 1);
                 listIndex++;
@@ -156,9 +170,11 @@ public class Orchestrator : MonoBehaviour
     {
         for (int column = 0; column < sizeX; column++)
         {
-            GameObject cellInstance = Instantiate(cellPrefab,
+            GameObject cellInstance = Instantiate(
+                cellPrefab,
                 new Vector3(column * smallestCellSize + 0.5f,
-                -sizeY - 0.5f, 0f),
+                -sizeY - 0.5f,
+                0f),
                 Quaternion.identity);
             cellInstance.name = "WWW " + column + "-" + sizeY;
             cellInstance.transform.localScale = cellInstance.transform.localScale * smallestCellSize;
@@ -181,6 +197,41 @@ public class Orchestrator : MonoBehaviour
         }
         sizeY -= 1;
         listLength = cellList.Count;
+        UpdateCellLinks();
+        UpdateCellSize();
+        RepositionRescaleCells();
+    }
+
+    void AddColumn()
+    {
+        for (int index = sizeX ; index < cellList.Count; index += sizeX)
+        {
+            GameObject cellInstance = Instantiate(
+                cellPrefab,
+                new Vector3(1f,
+                1f,
+                0f),
+                Quaternion.identity);
+            cellInstance.transform.localScale = cellInstance.transform.localScale * smallestCellSize;
+            cellList.Add(cellInstance);
+        }
+        sizeX += 1;
+        listLength = cellList.Count;
+        UpdateCellLinks();
+        UpdateCellSize();
+        RepositionRescaleCells();
+    }
+
+    void RemoveColumn()
+    {
+        for (int index = cellList.Count - 1; index > 0; index -= sizeX)
+        {
+            Destroy(cellList[index]);
+            cellList.RemoveAt(index);
+        }
+        sizeX -= 1;
+        listLength = cellList.Count;
+        Debug.Log(listLength);
         UpdateCellLinks();
         UpdateCellSize();
         RepositionRescaleCells();
