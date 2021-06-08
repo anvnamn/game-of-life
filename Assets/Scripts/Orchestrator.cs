@@ -128,12 +128,7 @@ public class Orchestrator : MonoBehaviour
         {
             for (int column = 0; column < sizeX; column++)
             {
-                GameObject cellInstance = Instantiate(cellPrefab,
-                    new Vector3(column + 0.5f,
-                    -row - 0.5f, 0f),
-                    Quaternion.identity);
-                cellInstance.name = "Cell " + column + "-" + row; 
-                cellList.Add(cellInstance);
+                cellList.Add(InstantiateCell());
             }
         }
         listLength = cellList.Count;
@@ -143,10 +138,11 @@ public class Orchestrator : MonoBehaviour
     {
         int listIndex = 0;
 
-        // Determine start of row based on cell size
+        // Determine start of rows based on cell size
         float totalRowLength = sizeX * smallestCellSize;
         float rowOffset = (40 - totalRowLength) / 2;
 
+        // Determine start of colums based on cell size
         float totalColumnHeight = sizeY * smallestCellSize;
         float columnOffset = (30 - totalColumnHeight) / 2;
 
@@ -167,17 +163,17 @@ public class Orchestrator : MonoBehaviour
         }
     }
 
+    GameObject InstantiateCell()
+    {
+        GameObject cellInstance = Instantiate(cellPrefab);
+        return cellInstance;
+    }
+
     void AddRow()
     {
         for (int column = 0; column < sizeX; column++)
         {
-            GameObject cellInstance = Instantiate(
-                cellPrefab,
-                new Vector3(column * smallestCellSize + 0.5f,
-                -sizeY - 0.5f,
-                0f),
-                Quaternion.identity);
-            cellList.Add(cellInstance);
+            cellList.Add(InstantiateCell());
         }
         sizeY += 1;
         listLength = cellList.Count;
@@ -205,13 +201,7 @@ public class Orchestrator : MonoBehaviour
     {
         for (int index = sizeX ; index < (sizeX + 1) * sizeY; index += sizeX + 1)
         {
-            GameObject cellInstance = Instantiate(
-                cellPrefab,
-                new Vector3(1f,
-                1f,
-                0f),
-                Quaternion.identity);
-            cellList.Insert(index,cellInstance);
+            cellList.Insert(index,InstantiateCell());
         }
         sizeX += 1;
         listLength = cellList.Count;
@@ -229,7 +219,6 @@ public class Orchestrator : MonoBehaviour
         }
         sizeX -= 1;
         listLength = cellList.Count;
-        Debug.Log(listLength);
         UpdateCellLinks();
         UpdateCellSize();
         RepositionRescaleCells();
