@@ -202,7 +202,7 @@ public class Orchestrator : MonoBehaviour
 
     void RemoveColumn()
     {
-        for (int index = cellList.Count - 1; index > 0; index -= sizeX)
+        for (int index = listLength - 1; index > 0; index -= sizeX)
         {
             Destroy(cellList[index]);
             cellList.RemoveAt(index);
