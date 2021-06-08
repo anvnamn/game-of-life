@@ -100,8 +100,6 @@ public class Orchestrator : MonoBehaviour
     {
         cellSizeX = Camera.main.orthographicSize * 2 * 4 / (3 *sizeX);
         cellSizeY = Camera.main.orthographicSize * 2 / sizeY;
-        Debug.Log("New size X: " + cellSizeX);
-        Debug.Log("New size Y: " + cellSizeY);
 
         if (cellSizeX < cellSizeY)
         {
@@ -149,6 +147,9 @@ public class Orchestrator : MonoBehaviour
         float totalRowLength = sizeX * smallestCellSize;
         float rowOffset = (40 - totalRowLength) / 2;
 
+        float totalColumnHeight = sizeY * smallestCellSize;
+        float columnOffset = (30 - totalColumnHeight) / 2;
+
         for (int row = 0; row < sizeY; row++)
         {
             for (int column = 0; column < sizeX; column++)
@@ -157,7 +158,7 @@ public class Orchestrator : MonoBehaviour
                 cell.transform.position =
                     new Vector3(
                         column * smallestCellSize + smallestCellSize / 2 + rowOffset,
-                        -row * smallestCellSize - smallestCellSize / 2,
+                        -row * smallestCellSize - smallestCellSize / 2 - columnOffset,
                         0f);
                 cell.name = "Cell " + column + "-" + row;
                 cell.transform.localScale = new Vector3(smallestCellSize, smallestCellSize, 1);
@@ -176,8 +177,6 @@ public class Orchestrator : MonoBehaviour
                 -sizeY - 0.5f,
                 0f),
                 Quaternion.identity);
-            cellInstance.name = "WWW " + column + "-" + sizeY;
-            cellInstance.transform.localScale = cellInstance.transform.localScale * smallestCellSize;
             cellList.Add(cellInstance);
         }
         sizeY += 1;
@@ -204,7 +203,7 @@ public class Orchestrator : MonoBehaviour
 
     void AddColumn()
     {
-        for (int index = sizeX ; index < cellList.Count; index += sizeX)
+        for (int index = sizeX ; index < (sizeX + 1) * sizeY; index += sizeX + 1)
         {
             GameObject cellInstance = Instantiate(
                 cellPrefab,
@@ -212,8 +211,7 @@ public class Orchestrator : MonoBehaviour
                 1f,
                 0f),
                 Quaternion.identity);
-            cellInstance.transform.localScale = cellInstance.transform.localScale * smallestCellSize;
-            cellList.Add(cellInstance);
+            cellList.Insert(index,cellInstance);
         }
         sizeX += 1;
         listLength = cellList.Count;
