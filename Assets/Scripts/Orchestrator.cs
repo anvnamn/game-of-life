@@ -7,6 +7,7 @@ public class Orchestrator : MonoBehaviour
     [SerializeField] GameObject cellPrefab;
     [SerializeField] int sizeX = 40;
     [SerializeField] int sizeY = 30;
+    [SerializeField] AudioClip tick;
 
     // State vars
     int listLength;
@@ -15,11 +16,15 @@ public class Orchestrator : MonoBehaviour
     float cellSizeY;
     float smallestCellSize;
 
+    // Cached reference
+    AudioSource audioSource;
+
     List<GameObject> cellList;
 
     void Start()
     {
         InitiateCells();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Awake()
@@ -90,9 +95,28 @@ public class Orchestrator : MonoBehaviour
             {
                 cellObject.GetComponent<Cell>().UpdateState();
             }
+            float ratioOfLiveCells = RatioOfLiveCells();
+            audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
+            if (audioSource.pitch > 3f) audioSource.pitch = 3f;
+            if (ratioOfLiveCells > 0.0001)
+            {
+                audioSource.PlayOneShot(tick);
+            }
             if (gameIsRunning == false) break;
             yield return new WaitForSeconds(0.1f);
         }
+    }
+
+    float RatioOfLiveCells()
+    {
+        float totalCells = listLength;
+        float liveCells = 0;
+
+        foreach (GameObject cellObject in cellList)
+        {
+            if (cellObject.GetComponent<Cell>().GetCurrentState()) liveCells++;
+        }
+        return liveCells / totalCells;
     }
 
     void UpdateCellSize()
