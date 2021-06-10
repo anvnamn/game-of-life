@@ -156,7 +156,7 @@ MonoBehaviour:
   cellPrefab: {fileID: 2504692626668952280, guid: 8c65cc4343f9f0a4294e96fe01cf6703, type: 3}
   sizeX: 40
   sizeY: 30
-  tick: {fileID: 8300000, guid: 64d730d574d53fc42834cd4ab1576b4d, type: 3}
+  tick: {fileID: 8300000, guid: 9923e2e3e65855849b5381625f6caec8, type: 3}
 --- !u!4 &693635099
 Transform:
   m_ObjectHideFlags: 0
