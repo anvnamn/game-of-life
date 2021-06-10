@@ -44,6 +44,7 @@ public class Orchestrator : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.S))
         {
             doOneStep = true;
+            gameIsRunning = false;
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
