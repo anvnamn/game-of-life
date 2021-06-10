@@ -303,7 +303,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7825306616866899144, guid: 0e41d3fd1f235524795e1ec828e67d03, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 11.24
+      value: 12.32
       objectReference: {fileID: 0}
     - target: {fileID: 7825306616886857458, guid: 0e41d3fd1f235524795e1ec828e67d03, type: 3}
       propertyPath: m_Name
@@ -399,19 +399,19 @@ PrefabInstance:
       objectReference: {fileID: 790835770}
     - target: {fileID: 7825306617067962760, guid: 0e41d3fd1f235524795e1ec828e67d03, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -1.86
+      value: -2.67
       objectReference: {fileID: 0}
     - target: {fileID: 7825306617067962767, guid: 0e41d3fd1f235524795e1ec828e67d03, type: 3}
       propertyPath: m_text
-      value: 'Click on a cell to change its state
+      value: 'Left/right click (and drag) on cells to set cell state
 
-        Press R to randomize states
-        of all cells
+        Press
+        R to randomize states of all cells
 
         Press C to set all cells to "dead"
 
-        Press Space
-        to start/stop the simulation
+        Press
+        Space to start/stop the simulation
 
         Press S to step through the simulation
 
