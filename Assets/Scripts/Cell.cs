@@ -14,7 +14,7 @@ public class Cell : MonoBehaviour
     SpriteRenderer squareSprite;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         squareSprite = GetComponent<SpriteRenderer>();
         UpdateCellColor();
