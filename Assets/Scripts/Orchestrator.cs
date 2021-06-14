@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Orchestrator : MonoBehaviour
-{
+{   
+    // Config Params
     [SerializeField] GameObject cellPrefab;
     [SerializeField] int sizeX = 40;
     [SerializeField] int sizeY = 30;
     [SerializeField] AudioClip tick;
+    [SerializeField] float period = 0.1f;
 
     // State vars
     int listLength;
@@ -16,6 +18,7 @@ public class Orchestrator : MonoBehaviour
     float cellSizeX;
     float cellSizeY;
     float smallestCellSize;
+    float nextIteration = 0f;
 
     // Cached reference
     AudioSource audioSource;
@@ -26,7 +29,6 @@ public class Orchestrator : MonoBehaviour
     {
         InitiateCells();
         audioSource = GetComponent<AudioSource>();
-        StartCoroutine(RunGame());
     }
 
     private void Awake()
@@ -72,6 +74,12 @@ public class Orchestrator : MonoBehaviour
         {
             RemoveColumn();
         }
+
+        if ((Time.time > nextIteration && gameIsRunning == true) || doOneStep == true)
+        {
+            nextIteration = Time.time + period;
+            DoGameStep();
+        }
     }
 
     private void KillAllCells()
@@ -82,31 +90,23 @@ public class Orchestrator : MonoBehaviour
         }
     }
 
-    IEnumerator RunGame()
+    void DoGameStep()
     {
-        while (true)
+        doOneStep = false;
+        foreach (GameObject cellObject in cellList)
         {
-            if (gameIsRunning || doOneStep)
-            {
-                doOneStep = false;
-
-                foreach (GameObject cellObject in cellList)
-                {
-                    cellObject.GetComponent<Cell>().CheckNextState();
-                }
-                foreach (GameObject cellObject in cellList)
-                {
-                    cellObject.GetComponent<Cell>().UpdateState();
-                }
-                float ratioOfLiveCells = RatioOfLiveCells();
-                audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
-                if (audioSource.pitch > 3f) audioSource.pitch = 3f;
-                if (ratioOfLiveCells > 0.0001)
-                {
-                    audioSource.PlayOneShot(tick);
-                }
-            }
-            yield return new WaitForSeconds(0.1f);
+            cellObject.GetComponent<Cell>().CheckNextState();
+        }
+        foreach (GameObject cellObject in cellList)
+        {
+            cellObject.GetComponent<Cell>().UpdateState();
+        }
+        float ratioOfLiveCells = RatioOfLiveCells();
+        audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
+        if (audioSource.pitch > 3f) audioSource.pitch = 3f;
+        if (ratioOfLiveCells > 0.0001)
+        {
+            audioSource.PlayOneShot(tick);
         }
     }
 
