@@ -2,55 +2,39 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Cell : MonoBehaviour
+public class Cell
 {
     // State vars
     bool currentState = false;
     bool nextState = false;
 
-    GameObject[] neighboringCellObjects = new GameObject[8];
-
-    // Cached reference
-    SpriteRenderer squareSprite;
+    Cell[] neighboringCells = new Cell[8];
 
     // Start is called before the first frame update
     void Awake()
     {
-        squareSprite = GetComponent<SpriteRenderer>();
-        UpdateCellColor();
     }
 
-    public void AddCellNeighbor(GameObject cellObject)
+    public void AddCellNeighbor(Cell cell)
     {
-        for (int index = 0; index < neighboringCellObjects.Length; index++)
+        for (int index = 0; index < neighboringCells.Length; index++)
         {
-            if (neighboringCellObjects[index] == null)
+            if (neighboringCells[index] == null)
             {
-                neighboringCellObjects[index] = cellObject;
+                neighboringCells[index] = cell;
                 break;
             }
         }
     }
 
-    public void ClearCellNeighbors()
-    {
-        for (int index = 0; index < neighboringCellObjects.Length; index++)
-        {
-            neighboringCellObjects[index] = null;
-        }
-    }
-
     public void CheckNextState()
     {
-        int totalNeighbors = 0;
         int neighborsAlive = 0;
 
-        for (int index = 0; index < neighboringCellObjects.Length; index++)
+        for (int index = 0; index < neighboringCells.Length; index++)
         {
-            if (neighboringCellObjects[index] == null) break;
-            else totalNeighbors += 1;
-
-            if (neighboringCellObjects[index].GetComponent<Cell>().GetCurrentState() == true) neighborsAlive += 1;
+            if (neighboringCells[index] == null) break;
+            if (neighboringCells[index].GetCurrentState() == true) neighborsAlive += 1;
         }
 
         if (currentState && (neighborsAlive == 2 || neighborsAlive == 3))
@@ -75,25 +59,18 @@ public class Cell : MonoBehaviour
     public void ToggleState()
     {
         currentState = !currentState;
-        UpdateCellColor();
     }
 
     public void SetState(bool state)
     {
-        currentState = state;
-        UpdateCellColor();
+        if (currentState != state)
+        {
+            currentState = state;
+        }
     }
 
-    public void UpdateState()
+    public void SetNextState()
     {
         currentState = nextState;
-        nextState = false;
-        UpdateCellColor();
     }
-
-    void UpdateCellColor()
-    {
-        if (currentState) squareSprite.color = new Color (0.5f, 0.5f, 0.5f);
-        else squareSprite.color = new Color(1f, 1f, 1f);
-    }   
 }
