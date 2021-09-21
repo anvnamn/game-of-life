@@ -5,33 +5,26 @@ using UnityEngine;
 public class Orchestrator : MonoBehaviour
 {
     // Config Params
-    //[SerializeField] GameObject cellPrefab;
     static int sizeX = 640;
     static int sizeY = 480;
     [SerializeField] AudioClip tick;
-    [SerializeField] float period = 0.1f;
-
     [SerializeField] GameObject gamePlane;
 
     // State vars
     bool gameIsRunning = false;
-    bool doOneStep = false;
-    float nextIteration = 0f;
     Cell[,] cellArray;
-
-    TextureGenerator textureGenerator;
 
     // Cached reference
     AudioSource audioSource;
+    TextureGenerator textureGenerator;
 
     void Start()
     {
         cellArray = new Cell[sizeX, sizeY];
-        InitiateCells();
         audioSource = GetComponent<AudioSource>();
-
         textureGenerator = gamePlane.GetComponent<TextureGenerator>();
-
+        textureGenerator.InitTexture(cellArray);
+        InitiateCells();
     }
 
     void Update()
@@ -40,32 +33,26 @@ public class Orchestrator : MonoBehaviour
         {
             gameIsRunning ^= true;
         }
-
-        if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
             DoGameStep();
+            gameIsRunning = false;
         }
-        if (Input.GetKeyDown(KeyCode.R))
+        else if (Input.GetKeyDown(KeyCode.R))
         {
             RandomizeCells();
         }
-        if (Input.GetKeyDown(KeyCode.C))
+        else if (Input.GetKeyDown(KeyCode.C))
         {
             KillAllCells();
             gameIsRunning = false;
         }
+        
         if (gameIsRunning)
         {
             DoGameStep();
         }
-
-        /*
-        if ((Time.time > nextIteration && gameIsRunning == true) || doOneStep == true)
-        {
-            nextIteration = Time.time + period;
-            DoGameStep();
-        }
-        */
+        textureGenerator.UpdateTexture(cellArray);
     }
 
     private void KillAllCells()
@@ -78,8 +65,6 @@ public class Orchestrator : MonoBehaviour
 
     void DoGameStep()
     {
-        print("Game is running!");
-        doOneStep = false;
         foreach (Cell cell in cellArray)
         {
             cell.CheckNextState();
@@ -88,7 +73,6 @@ public class Orchestrator : MonoBehaviour
         {
             cell.SetNextState();
         }
-        textureGenerator.GenerateTexture(cellArray);
         float ratioOfLiveCells = RatioOfLiveCells();
         audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
         if (audioSource.pitch > 3f) audioSource.pitch = 3f;

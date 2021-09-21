@@ -10,11 +10,6 @@ public class Cell
 
     Cell[] neighboringCells = new Cell[8];
 
-    // Start is called before the first frame update
-    void Awake()
-    {
-    }
-
     public void AddCellNeighbor(Cell cell)
     {
         for (int index = 0; index < neighboringCells.Length; index++)
