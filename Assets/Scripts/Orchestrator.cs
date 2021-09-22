@@ -1,39 +1,42 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Orchestrator : MonoBehaviour
-{   
+{
     // Config Params
-    [SerializeField] GameObject cellPrefab;
-    [SerializeField] int sizeX = 40;
-    [SerializeField] int sizeY = 30;
+    static int sizeX = 640;
+    static int sizeY = 480;
     [SerializeField] AudioClip tick;
-    [SerializeField] float period = 0.1f;
+    [SerializeField] GameObject gamePlane;
+    [SerializeField] GameObject stepDelaySliderObject;
 
     // State vars
-    int listLength;
     bool gameIsRunning = false;
-    bool doOneStep = false;
-    float cellSizeX;
-    float cellSizeY;
-    float smallestCellSize;
-    float nextIteration = 0f;
+    Cell[,] cellArray;
+    float previousGameStep = 0f;
+    public float gameStepDelay;
+    float ratioOfLiveCells = 0f;
+    float cameraSize = 60f;
+    int[] mousePosition;
 
     // Cached reference
     AudioSource audioSource;
+    TextureGenerator textureGenerator;
+    Slider stepDelaySlider;
 
-    List<GameObject> cellList;
 
     void Start()
     {
-        InitiateCells();
         audioSource = GetComponent<AudioSource>();
-    }
+        textureGenerator = gamePlane.GetComponent<TextureGenerator>();
+        stepDelaySlider = stepDelaySliderObject.GetComponent<Slider>();
 
-    private void Awake()
-    {
-        cellList = new List<GameObject>();
+        cellArray = new Cell[sizeX, sizeY];
+        mousePosition = new int[2];
+        textureGenerator.InitTexture(cellArray);
+        InitiateCells();
     }
 
     void Update()
@@ -42,109 +45,97 @@ public class Orchestrator : MonoBehaviour
         {
             gameIsRunning ^= true;
         }
-
-        if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
-            doOneStep = true;
+            DoGameStep();
             gameIsRunning = false;
         }
-        if (Input.GetKeyDown(KeyCode.R))
+        else if (Input.GetKeyDown(KeyCode.R))
         {
             RandomizeCells();
         }
-        if (Input.GetKeyDown(KeyCode.C))
+        else if (Input.GetKeyDown(KeyCode.C))
         {
             KillAllCells();
             gameIsRunning = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.DownArrow) && sizeY < 100)
+        mousePosition[0] = 640 - Mathf.RoundToInt(0.5f + Camera.main.ScreenToWorldPoint(Input.mousePosition).x * 4);
+        mousePosition[1] = 480 - Mathf.RoundToInt(0.5f + Camera.main.ScreenToWorldPoint(Input.mousePosition).y * 4);
+        print("Mouse pos: " + mousePosition[0] + " x " + mousePosition[1]);
+        if (mousePosition[0] > 0 && mousePosition[0] <= 640 && mousePosition[1] > 0 && mousePosition[1] <= 480)
         {
-            AddRow();
-        }
-        if (Input.GetKeyDown(KeyCode.UpArrow) && sizeY > 5)
-        {
-            RemoveRow();
-        }
-        if (Input.GetKeyDown(KeyCode.RightArrow) && sizeX < 100)
-        {
-            AddColumn();
-        }
-        if (Input.GetKeyDown(KeyCode.LeftArrow) && sizeX > 5)
-        {
-            RemoveColumn();
+            if (Input.GetMouseButton(0)) cellArray[mousePosition[0],mousePosition[1]].SetState(true);
+            if (Input.GetMouseButton(1)) cellArray[mousePosition[0],mousePosition[1]].SetState(false);
         }
 
-        if ((Time.time > nextIteration && gameIsRunning == true) || doOneStep == true)
+
+        cameraSize = cameraSize + Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * -500;
+        if (cameraSize < 1f) cameraSize = 1f;
+        else if (cameraSize > 60f) cameraSize = 60f;
+        Camera.main.orthographicSize = cameraSize;
+
+
+        gameStepDelay = Mathf.Pow(stepDelaySlider.value, 10f);
+
+        if(gameIsRunning && Time.time > previousGameStep + gameStepDelay)
         {
-            nextIteration = Time.time + period;
-            DoGameStep();
+            previousGameStep = Time.time;
+            if (gameIsRunning) DoGameStep();
         }
+
+        print(gameStepDelay);
+
+        textureGenerator.UpdateTexture(cellArray);
     }
 
     private void KillAllCells()
     {
-        foreach (GameObject cellObject in cellList)
+        foreach (Cell cell in cellArray)
         {
-            cellObject.GetComponent<Cell>().SetState(false);
+            cell.SetState(false);
         }
     }
 
     void DoGameStep()
     {
-        doOneStep = false;
-        foreach (GameObject cellObject in cellList)
-        {
-            cellObject.GetComponent<Cell>().CheckNextState();
-        }
-        foreach (GameObject cellObject in cellList)
-        {
-            cellObject.GetComponent<Cell>().UpdateState();
-        }
-        float ratioOfLiveCells = RatioOfLiveCells();
+        ratioOfLiveCells = RatioOfLiveCells();
         audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
         if (audioSource.pitch > 3f) audioSource.pitch = 3f;
         if (ratioOfLiveCells > 0.0001)
         {
             audioSource.PlayOneShot(tick);
         }
+        foreach (Cell cell in cellArray)
+        {
+            cell.CheckNextState();
+        }
+        foreach (Cell cell in cellArray)
+        {
+            cell.SetNextState();
+        }
     }
 
     float RatioOfLiveCells()
     {
-        float totalCells = listLength;
+        float totalCells = cellArray.Length;
         float liveCells = 0;
 
-        foreach (GameObject cellObject in cellList)
+        foreach (Cell cell in cellArray)
         {
-            if (cellObject.GetComponent<Cell>().GetCurrentState()) liveCells++;
+            if (cell.GetCurrentState()) liveCells++;
         }
         return liveCells / totalCells;
     }
 
-    void UpdateCellSize()
-    {
-        cellSizeX = Camera.main.orthographicSize * 2 * 4 / (3 *sizeX);
-        cellSizeY = Camera.main.orthographicSize * 2 / sizeY;
-
-        if (cellSizeX < cellSizeY)
-        {
-            smallestCellSize = cellSizeX;
-        }
-        else
-        {
-            smallestCellSize = cellSizeY;
-        }
-    }
-
     void RandomizeCells()
     {
-        foreach (GameObject cellObject in cellList)
+        foreach (Cell cell in cellArray)
         {
             bool randomBool;
             if (Random.value > 0.5f) randomBool = true;
             else randomBool = false;
-            cellObject.GetComponent<Cell>().SetState(randomBool);
+            cell.SetState(randomBool);
         }
     }
 
@@ -154,169 +145,79 @@ public class Orchestrator : MonoBehaviour
         {
             for (int column = 0; column < sizeX; column++)
             {
-                cellList.Add(InstantiateCell());
+                Cell cell = new Cell();
+                cellArray[column, row] = cell;
             }
         }
-        UpdateCellList();
+        CreateCellLinks();
     }
 
-    void RepositionRescaleCells()
+    void CreateCellLinks()
     {
-        int listIndex = 0;
-
-        // Determine start of rows based on cell size
-        float totalRowLength = sizeX * smallestCellSize;
-        float rowOffset = (40 - totalRowLength) / 2;
-
-        // Determine start of colums based on cell size
-        float totalColumnHeight = sizeY * smallestCellSize;
-        float columnOffset = (30 - totalColumnHeight) / 2;
-
         for (int row = 0; row < sizeY; row++)
         {
             for (int column = 0; column < sizeX; column++)
             {
-                GameObject cell = cellList[listIndex].gameObject;
-                cell.transform.position =
-                    new Vector3(
-                        column * smallestCellSize + smallestCellSize / 2 + rowOffset,
-                        -row * smallestCellSize - smallestCellSize / 2 - columnOffset,
-                        0f);
-                cell.name = "Cell " + column + "-" + row;
-                cell.transform.localScale = new Vector3(smallestCellSize, smallestCellSize, 1);
-                listIndex++;
+                Cell cellClass = cellArray[column, row];
+
+                bool topRow = false;
+                bool bottomRow = false;
+                bool leftColumn = false;
+                bool rightColumn = false;
+
+                if (row < 1) topRow = true;
+                if (row == sizeY - 1) bottomRow = true;
+                if (column < 1) leftColumn = true;
+                if (column == sizeX - 1) rightColumn = true;
+
+                //Neighboring cells notation (origin cell notated as X)
+                //NW    N   NE
+                //W     X   E
+                //SW    S   SE
+
+                // NW
+                if (topRow == false && leftColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column - 1, row - 1]);
+                }
+                // N
+                if (topRow == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column, row - 1]);
+                }
+                // NE
+                if (topRow == false && rightColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column + 1, row - 1]);
+                }
+
+                // W
+                if (leftColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column - 1, row]);
+                }
+                // E
+                if (rightColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column + 1, row]);
+                }
+
+                // SW
+                if (bottomRow == false && leftColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column - 1, row + 1]);
+                }
+                // S
+                if (bottomRow == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column, row + 1]);
+                }
+                // SE
+                if (bottomRow == false && rightColumn == false)
+                {
+                    cellClass.AddCellNeighbor(cellArray[column + 1, row + 1]);
+                }
             }
         }
     }
-
-    GameObject InstantiateCell()
-    {
-        GameObject cellInstance = Instantiate(cellPrefab);
-        return cellInstance;
-    }
-
-    void AddRow()
-    {
-        for (int column = 0; column < sizeX; column++)
-        {
-            cellList.Add(InstantiateCell());
-        }
-        sizeY += 1;
-        UpdateCellList();
-    }
-
-    void RemoveRow()
-    {
-        for (int column = 0; column < sizeX; column++)
-        {
-            int lastItemIndex = cellList.Count - 1;
-            Destroy(cellList[lastItemIndex]);
-            cellList.RemoveAt(lastItemIndex);
-        }
-        sizeY -= 1;
-        UpdateCellList();
-    }
-
-    void AddColumn()
-    {
-        for (int index = sizeX ; index < (sizeX + 1) * sizeY; index += sizeX + 1)
-        {
-            cellList.Insert(index,InstantiateCell());
-        }
-        sizeX += 1;
-        UpdateCellList();
-    }
-
-    void RemoveColumn()
-    {
-        for (int index = listLength - 1; index > 0; index -= sizeX)
-        {
-            Destroy(cellList[index]);
-            cellList.RemoveAt(index);
-        }
-        sizeX -= 1;
-        UpdateCellList();
-    }
-
-    private void UpdateCellList()
-    {
-        listLength = cellList.Count;
-        UpdateCellLinks();
-        UpdateCellSize();
-        RepositionRescaleCells();
-    }
-
-    void UpdateCellLinks()
-    {
-        bool topRow, bottomRow, leftColumn, rightColumn;
-        int index = 0;
-        Cell cellClass;
-
-        foreach (GameObject cellObject in cellList)
-        {
-            cellClass = cellObject.GetComponent<Cell>();
-            cellClass.ClearCellNeighbors();
-
-            topRow = false;
-            bottomRow = false;
-            leftColumn = false;
-            rightColumn = false;
-
-            if (index < sizeX) topRow = true;
-            if (index >= listLength - sizeX) bottomRow = true;
-
-            if (index % sizeX == 0) leftColumn = true;
-            if (index % sizeX == sizeX - 1) rightColumn = true;
-
-            //Neighboring cells notation (origin cell notated as X)
-            //NW    N   NE
-            //W     X   E
-            //SW    S   SE
-
-            // NW
-            if (topRow == false && leftColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index - sizeX - 1]);
-            }
-            // N
-            if (topRow == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index - sizeX]);
-            }
-            // NE
-            if (topRow == false && rightColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index - sizeX + 1]);
-            }
-
-            // W
-            if (leftColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index - 1]);
-            }
-            // E
-            if (rightColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index + 1]);
-            }
-
-            // SW
-            if (bottomRow == false && leftColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index + sizeX - 1]);
-            }
-            // S
-            if (bottomRow == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index + sizeX]);
-            }
-            // SE
-            if (bottomRow == false && rightColumn == false)
-            {
-                cellClass.AddCellNeighbor(cellList[index + sizeX + 1]);
-            }
-            index++;
-        }
-    }
-
 }
