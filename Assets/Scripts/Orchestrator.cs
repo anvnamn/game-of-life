@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Orchestrator : MonoBehaviour
 {
@@ -9,20 +10,28 @@ public class Orchestrator : MonoBehaviour
     static int sizeY = 480;
     [SerializeField] AudioClip tick;
     [SerializeField] GameObject gamePlane;
+    [SerializeField] GameObject stepDelaySliderObject;
 
     // State vars
     bool gameIsRunning = false;
     Cell[,] cellArray;
+    float previousGameStep = 0f;
+    public float gameStepDelay;
+    float ratioOfLiveCells = 0f;
 
     // Cached reference
     AudioSource audioSource;
     TextureGenerator textureGenerator;
+    Slider stepDelaySlider;
+
 
     void Start()
     {
-        cellArray = new Cell[sizeX, sizeY];
         audioSource = GetComponent<AudioSource>();
         textureGenerator = gamePlane.GetComponent<TextureGenerator>();
+        stepDelaySlider = stepDelaySliderObject.GetComponent<Slider>();
+
+        cellArray = new Cell[sizeX, sizeY];
         textureGenerator.InitTexture(cellArray);
         InitiateCells();
     }
@@ -47,11 +56,17 @@ public class Orchestrator : MonoBehaviour
             KillAllCells();
             gameIsRunning = false;
         }
-        
-        if (gameIsRunning)
+
+        gameStepDelay = Mathf.Pow(stepDelaySlider.value, 10f);
+
+        if(gameIsRunning && Time.time > previousGameStep + gameStepDelay)
         {
-            DoGameStep();
+            previousGameStep = Time.time;
+            if (gameIsRunning) DoGameStep();
         }
+
+        print(gameStepDelay);
+
         textureGenerator.UpdateTexture(cellArray);
     }
 
@@ -65,6 +80,13 @@ public class Orchestrator : MonoBehaviour
 
     void DoGameStep()
     {
+        ratioOfLiveCells = RatioOfLiveCells();
+        audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
+        if (audioSource.pitch > 3f) audioSource.pitch = 3f;
+        if (ratioOfLiveCells > 0.0001)
+        {
+            audioSource.PlayOneShot(tick);
+        }
         foreach (Cell cell in cellArray)
         {
             cell.CheckNextState();
@@ -72,13 +94,6 @@ public class Orchestrator : MonoBehaviour
         foreach (Cell cell in cellArray)
         {
             cell.SetNextState();
-        }
-        float ratioOfLiveCells = RatioOfLiveCells();
-        audioSource.pitch = ratioOfLiveCells * 10 + 0.1f;
-        if (audioSource.pitch > 3f) audioSource.pitch = 3f;
-        if (ratioOfLiveCells > 0.0001)
-        {
-            audioSource.PlayOneShot(tick);
         }
     }
 
