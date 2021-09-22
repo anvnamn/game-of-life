@@ -18,6 +18,7 @@ public class Orchestrator : MonoBehaviour
     float previousGameStep = 0f;
     public float gameStepDelay;
     float ratioOfLiveCells = 0f;
+    float cameraSize = 60f;
 
     // Cached reference
     AudioSource audioSource;
@@ -56,6 +57,12 @@ public class Orchestrator : MonoBehaviour
             KillAllCells();
             gameIsRunning = false;
         }
+
+        cameraSize = cameraSize + Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * 500;
+        if (cameraSize < 1f) cameraSize = 1f;
+        else if (cameraSize > 60f) cameraSize = 60f;
+        Camera.main.orthographicSize = cameraSize;
+
 
         gameStepDelay = Mathf.Pow(stepDelaySlider.value, 10f);
 
