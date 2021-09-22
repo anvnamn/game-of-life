@@ -19,6 +19,7 @@ public class Orchestrator : MonoBehaviour
     public float gameStepDelay;
     float ratioOfLiveCells = 0f;
     float cameraSize = 60f;
+    int[] mousePosition;
 
     // Cached reference
     AudioSource audioSource;
@@ -33,6 +34,7 @@ public class Orchestrator : MonoBehaviour
         stepDelaySlider = stepDelaySliderObject.GetComponent<Slider>();
 
         cellArray = new Cell[sizeX, sizeY];
+        mousePosition = new int[2];
         textureGenerator.InitTexture(cellArray);
         InitiateCells();
     }
@@ -58,7 +60,17 @@ public class Orchestrator : MonoBehaviour
             gameIsRunning = false;
         }
 
-        cameraSize = cameraSize + Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * 500;
+        mousePosition[0] = 640 - Mathf.RoundToInt(0.5f + Camera.main.ScreenToWorldPoint(Input.mousePosition).x * 4);
+        mousePosition[1] = 480 - Mathf.RoundToInt(0.5f + Camera.main.ScreenToWorldPoint(Input.mousePosition).y * 4);
+        print("Mouse pos: " + mousePosition[0] + " x " + mousePosition[1]);
+        if (mousePosition[0] > 0 && mousePosition[0] <= 640 && mousePosition[1] > 0 && mousePosition[1] <= 480)
+        {
+            if (Input.GetMouseButton(0)) cellArray[mousePosition[0],mousePosition[1]].SetState(true);
+            if (Input.GetMouseButton(1)) cellArray[mousePosition[0],mousePosition[1]].SetState(false);
+        }
+
+
+        cameraSize = cameraSize + Input.GetAxis("Mouse ScrollWheel") * Time.deltaTime * -500;
         if (cameraSize < 1f) cameraSize = 1f;
         else if (cameraSize > 60f) cameraSize = 60f;
         Camera.main.orthographicSize = cameraSize;
@@ -134,7 +146,6 @@ public class Orchestrator : MonoBehaviour
             for (int column = 0; column < sizeX; column++)
             {
                 Cell cell = new Cell();
-                // Instantiate(cellPrefab, new Vector3(column, row, 0f), Quaternion.identity);
                 cellArray[column, row] = cell;
             }
         }
