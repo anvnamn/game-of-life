@@ -405,22 +405,24 @@ PrefabInstance:
       propertyPath: m_text
       value: 'Left/right click (and drag) on cells to set cell state
 
+        R to
+        randomize states of all cells
+
+        C to set all cells to "dead"
+
+        Space
+        to start/stop the simulation
+
+        S to step through the simulation
+
+        Mouse
+        scroll wheel to zoom in/out
+
+        Use slider to adjust game speed
+
+
         Press
-        R to randomize states of all cells
-
-        Press C to set all cells to "dead"
-
-        Press
-        Space to start/stop the simulation
-
-        Press S to step through the simulation
-
-        Use
-        arrow keys to adjust the size of the simulation
-
-
-        Press any key to
-        continue'
+        any key to continue'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0e41d3fd1f235524795e1ec828e67d03, type: 3}
